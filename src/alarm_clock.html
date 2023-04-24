@@ -1,0 +1,354 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Alarm Clock</title>
+
+    <style>
+        *{
+           
+          margin: 0;
+          padding: 0;
+}
+
+body{
+    height: 100vh;
+    display:flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    background: #10101E;
+}
+::-webkit-scrollbar{
+    display: none;
+}
+
+.alarm{
+    border: 3px solid #f64ec1;
+    border-radius: 8px;
+}
+
+.datetime{
+    color: #fff;
+    background: #1e1d10;
+    font-family: "Segoe UI", sans-serif;
+    width: 340px;
+    padding: 15px 10px;
+    transition: 0.5s;
+    transition-property: background,box-shadow;
+}
+
+.datetime:hover{
+    background: #f21189;
+    box-shadow: 0 0 30px #2E94E3;
+    border-radius: 5px;
+}
+
+.date{
+    font-size: 20px;
+    font-weight: 600;
+    text-align: center;
+    letter-spacing: 3px;
+}
+
+.time{
+    font-size: 60px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.time span:not(:last-child){
+    position: relative;
+    max-width: 0 6px;
+    font-weight: 600;
+    text-align: center;
+}
+
+.time span:last-child{
+    background: #2E94E3;
+    font-size: 30px;
+    font-weight: 600;
+    text-transform: uppercase;
+    margin-top: 10px;
+    padding: 0 5px;
+    border-radius: 3px;
+}
+
+hr{
+    border: 1px solid #ef35d3;
+    margin: 20px auto;
+}
+
+.setAlarm{
+    display: flex;
+    justify-content: space-around;
+    border-radius: 10px;
+}
+
+.column select:hover{
+    background: #f21189;
+    box-shadow: 0 0 30px #2E94E3;
+    border-radius: 5px;
+}
+.column select{
+    background: #0f4ee0;
+    color: #fff;
+    text-align: center;
+    padding: 8px 4px;
+    border: 1px solid #2E94E3;
+    border-radius: 18px;
+}
+
+
+#btn-setAlarm, .btn-delete, #stopAlarm{
+    padding: 5px;
+    color: #fff;
+    background: #2E94E3;
+    border: 1px solid #2E94E3;
+    border-radius: 18px;
+}
+
+#stopAlarm{
+    visibility: hidden;
+    width: 100px;
+    margin: 0 34%;
+}
+
+.btn-delete{
+    margin-left: 50px;
+}
+
+#btn-setAlarm:hover, .btn-delete:hover, #stopAlarm:hover{
+    cursor: pointer;
+    background: #2E94E3;
+    box-shadow: 0 0 30px #2E94E3;
+}
+
+h3{
+    color: #fff;
+    font-family: "Segoe UI", sans-serif;
+    font-size: 20px;
+    font-weight: 900;
+    text-align: center;
+    margin-bottom: 3%;
+}
+
+.alarmList{
+    color: #fff;
+    margin: 14px auto;
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-evenly;
+}
+
+.alarmLog{
+    font-size: 30px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin: 6px auto;
+}
+    </style>
+</head>
+
+
+<body onload="initClock()">
+
+    <div class="alarm">
+
+        <div class="datetime">
+            <div class="date">
+                <span id="dayName">Day</span>,
+                <span id="month">Month</span>,
+                <span id="dayNum">00</span>,
+                <span id="year">Year</span>
+            </div>
+            <div class="time">
+                <span id="hour">00</span>:
+                <span id="minutes">00</span>:
+                <span id="seconds">00</span>:
+                <span id="period">AM</span>
+            </div>
+            <button id="stopAlarm" onclick="stopAlarm()">Stop Alarm</button>
+        </div>
+
+        <hr>
+
+        <div class="setAlarm">
+
+            <div class="column">
+                <select>
+                    <option value="setHour" selected hidden>Hour</option>
+                </select>
+            </div>
+
+            <div class="column">
+                <select>
+                    <option value="setMinute" selected hidden>Minute</option>
+                    
+                </select>
+            </div>
+
+            <div class="column">
+                <select>
+                    <option value="AM/PM" selected hidden>AM/PM</option>
+                </select>
+            </div>
+
+            <button id="btn-setAlarm" type="submit">Set Alarm</button>
+            
+        </div>
+
+        <hr>
+
+        <h3 id="alarm-h3"></h3>
+
+        <div class="alarmList">
+                
+            
+        </div>
+
+        
+    </div>
+
+
+    <script>
+        
+// variables
+let alarmListArr = [];
+const selectMenu = document.querySelectorAll("select");
+const setAlarmBtn = document.querySelector("#btn-setAlarm");
+let alarmCount = 0;
+let alarmTime;
+let ring = new Audio("alarm-ringtone.mp3");
+
+
+// Script for Time and Date
+
+
+function updateClock(){
+    var now = new Date();
+    var dname = now.getDay(),
+        mo = now.getMonth(),
+        dnum = now.getDate(),
+        yr = now.getFullYear(),
+        hou = now.getHours(),
+        min = now.getMinutes(),
+        sec = now.getSeconds(),
+        pe = "AM";
+
+        if(hou==0){
+            hou = 12;
+        }
+
+        if(hou>12){
+            hou -=12;
+            pe = "PM";
+        }
+
+        Number.prototype.pad = function(digits){
+            for(var n = this.toString(); n.length<digits; n=0+n);
+            return n;
+        }
+
+        var months = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+        var week = ["Sunday", "Monday", "Tusday", "Wednesday", "Thursday", "Friday", "Saturday"];
+        var ids =["dayName", "month", "dayNum", "year", "hour", "minutes", "seconds", "period"];
+        var values = [week[dname], months[mo], dnum.pad(2),yr,hou.pad(2),min.pad(2),sec.pad(2),pe];
+        
+        for(var i=0; i<ids.length;i++){
+            document.getElementById(ids[i]).firstChild.nodeValue = values[i];
+        }
+
+        let alarmTime = `${hou.pad(2)}:${min.pad(2)}:${sec.pad(2)} ${pe}`;
+        let fiveMinBefore = new Date();
+        fiveMinBefore.setMinutes(fiveMinBefore.getMinutes() + 5);
+        let fiveMinBeforeStr = `${fiveMinBefore.getHours().toString().padStart(2, '0')}:${fiveMinBefore.getMinutes().toString().padStart(2, '0')}:${fiveMinBefore.getSeconds().toString().padStart(2, '0')} ${pe}`;
+
+        for(let i=0; i<alarmListArr.length;i++){
+            if(alarmListArr[i]== alarmTime){
+                console.log("Alarm ringing...");
+                ring.load();
+                ring.play();
+                document.querySelector("#stopAlarm").style.visibility= "visible";
+            }
+            else if(alarmListArr[i] == fiveMinBeforeStr){
+                alert("Alarm in 5 minutes!");
+            }
+        }
+}
+
+
+function initClock() {
+    updateClock();
+    window.setInterval("updateClock()",1000);
+}
+
+
+//Set Alarm section
+
+
+for(let i=12; i>0;i--){
+    i=i<10 ? "0"+i :i;
+    let option = `<option value="${i}">${i}</option>`;
+    selectMenu[0].firstElementChild.insertAdjacentHTML("afterend", option);
+}
+
+for(let i=59; i>=0;i--){
+    i=i<10 ? "0"+i :i;
+    let option = `<option value="${i}">${i}</option>`;
+    selectMenu[1].firstElementChild.insertAdjacentHTML("afterend", option);
+}
+
+for(let i=2; i>0;i--){
+    let ampm = i== 1? "AM":"PM";
+    let option = `<option value="${ampm}">${ampm}</option>`;
+    selectMenu[2].firstElementChild.insertAdjacentHTML("afterend", option);
+}
+
+//add alarm 
+
+
+function setAlarm(){
+    document.querySelector("#alarm-h3").innerText = "Alarms";
+    let time = `${selectMenu[0].value}:${selectMenu[1].value}:00 ${selectMenu[2].value}`;
+    if(time.includes("setHour") || time.includes("setMinute") || time.includes("AM/PM")){
+        alert("Please, Select Valid Input, must set Hour, Minute and AM/PM");
+    }else{
+        alarmCount++;
+        document.querySelector(".alarmList").innerHTML += `
+        <div class="alarmLog" id="alarm${alarmCount}">
+            <span id="span${alarmCount}">${time}</span>
+            <button class="btn-delete" id="${alarmCount}" onClick="deleteAlarm(this.id)">Delete</button>
+        </div>`;
+
+        alarmTime = `${selectMenu[0].value}:${selectMenu[1].value}:00 ${selectMenu[2].value}`;
+        alarmListArr.push(alarmTime);
+        console.log(document.querySelector(".btn-delete").value);
+    }
+
+}
+
+setAlarmBtn.addEventListener("click",setAlarm);
+
+//delete alarm
+
+function deleteAlarm(click_id){
+    var element = document.getElementById("alarm"+click_id);
+    var deleteIndex = alarmListArr.indexOf(document.querySelector("#span"+click_id).innerText);
+    alarmListArr.splice(deleteIndex,1);
+    element.remove();
+}
+
+function stopAlarm(){
+    ring.pause();
+    document.querySelector("#stopAlarm").style.visibility= "hidden";
+}
+
+    </script>
+</body>
+</html>
